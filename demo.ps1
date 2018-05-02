@@ -28,9 +28,6 @@ https://docs.microsoft.com/en-us/powershell/module/
 
 #endregion
 
-
-
-
 #region Learn about commands
 
 #Learn more about Get-Command
@@ -109,26 +106,55 @@ Get-ChildItem -Path "C:\TTL"
 Get-ChildItem -Path "C:\TTL2"
 
 #Cleanup our first directory including all files within
-Remove-Item -Path "C:\TTL" -Recurse
+Remove-Item -Path "C:\TTL\*" -Recurse
 
 #Cleanup our second directory including all files and do not prompt about removal
 Remove-Item -Path "C:\TTL2" -Recurse -Confirm:$false
 #endregion
 
-#Region pipeline service
+#region pipeline service
+
+#Check all services on this computer (or other computer using -ComputerName)
 Get-Service
 
+#Check properties of a service
 Get-Service -Name BITS
 
+#Use pipeline to check extended properties of a service
 Get-Service -Name BITS | Format-List
 
+#Use pipeline to sort all services by the Status property of that service
 Get-Service | Sort-Object -Property Status
 
+#Find all services that are currently running
 Get-Service  | Where-Object {$_.Status -eq "Running"} 
 
+#Find all services that are stopped, then start those services
 Get-Service | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
-#Real world example
+#Real world example - specific service that I know should be running is stopped on boot. Automatically start that service
 Get-Service -Name MBAMAgent | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
 #endregion
+
+#region Pipeline export
+
+#Get all security log events after yesterday
+Get-EventLog -LogName Security -After (Get-date).AddDays(-1)
+
+#Get events after yesterday and export to csv file
+Get-EventLog -LogName Security -After (Get-date).AddDays(-1) | Export-Csv c:\TTL\SecurityLog.csv
+
+#Open default program for csv files (Excel/Notepad) to examine the csv file
+Invoke-Item C:\TTL\SecurityLog.csv
+
+#Import Security logs from csv file to work with
+Import-Csv C:\TTL\SecurityLog.csv
+#endregion
+
+#region Import modules?
+
+#endregion
+
+
+
