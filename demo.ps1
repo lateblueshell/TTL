@@ -115,8 +115,20 @@ Remove-Item -Path "C:\TTL" -Recurse
 Remove-Item -Path "C:\TTL2" -Recurse -Confirm:$false
 #endregion
 
-#Region pipeline
+#Region pipeline service
+Get-Service
 
+Get-Service -Name BITS
 
+Get-Service -Name BITS | Format-List
+
+Get-Service | Sort-Object -Property Status
+
+Get-Service  | Where-Object {$_.Status -eq "Running"} 
+
+Get-Service | Where-Object {$_.Status -eq "Stopped"} | Start-Service
+
+#Real world example
+Get-Service -Name MBAMAgent | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
 #endregion
