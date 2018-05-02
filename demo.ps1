@@ -156,5 +156,26 @@ Import-Csv C:\TTL\SecurityLog.csv
 
 #endregion
 
+#region Objects
 
+#Visually show the object returned from Get-Process. This is a great way to understand the object rows and property columns
+get-process | Out-GridView
+
+#Look at the objects and methods available for Get-Process
+Get-Process | Get-Member
+
+#Narrow down the properties returned from the original object
+Get-Process | Select-Object ProcessName, VM
+
+#Since the output we get is processed from right to left, we can get processes, 
+#select two properties of them, then sort by one of those properties
+Get-Process | Select-Object ProcessName, VM | Sort-Object VM -Descending
+
+#Looking at the object in the pipeline we can see that we have narrowed down the methods and properties that are available
+Get-Process | Select-Object ProcessName, VM | Sort-Object VM -Descending | Get-Member
+
+#Export or Out commands should always come last. The object we have in the pipeline is now exported to text and stored. No methods left
+Get-Process | Select-Object ProcessName, VM | Sort-Object VM -Descending | Export-Csv C:\TTL\ProcessName.csv
+
+#endregion
 
