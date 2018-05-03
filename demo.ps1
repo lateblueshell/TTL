@@ -310,7 +310,70 @@ $services | Where-Object {$_.Name -eq "BITS"} | Set-Service -StartupType "Automa
 $services = $null
 
 #Remember how we import data from a spreadsheet earlier? Previously we could really just look at it. Now we can work with that data
-#Here is the service name and Virtual Memory all stored in an object we can work with
-$services = Import-Csv C:\TTL\ProcessName.csv
+#Here is the service name and Virtual Memory all stored in an object we can work with. 
+
+$services = Import-Csv "C:\TTL\ProcessName.csv"
 
 #endregion
+
+#region Output/Logging
+
+#Set a variable for a log file
+$log = "C:\TTL\log.txt"
+
+#Lets use variables for a reusable script. This prompts a user to enter a computer name and spits back out the name. Run both lines together
+$name = Read-Host "Enter a computer name"
+Write-Host $name
+
+#Ok, that works but Write-Host is not a great way to display text. As Don Jones famously said, it kills puppies. 
+#Further reading on that one https://blogs.technet.microsoft.com/heyscriptingguy/2015/07/04/weekend-scripter-welcome-to-the-powershell-information-stream/
+#Instead, we can use Write-Output
+
+$name = Read-Host "Enter a computer name"
+Write-Output $name
+
+#Lets explore what happens. 
+
+$name_output = $name + "_output"
+$name_host = $name + "_host"
+
+$name_output
+$name_host
+
+#Take those same commands and drop them to a log file as a script would do. What's the difference?
+Write-Output $name_output | Out-File $log -Append
+Write-Host $name_host | Out-File $log -Append
+
+#Open the log to check
+Invoke-Item $log
+
+#So how would you use something like this? Here is a script that you could save as a ps1. Then a user could run it, answer the service name
+# and then get the status of that service
+$name = Read-Host "Enter a service name"
+$service = Get-Service $name 
+
+     If ($service.status -eq "Running") {
+
+         Write-Host "The service is running"} 
+
+    Else {
+
+        Write-Host "The service is not running"}
+
+#Lets design a bit more for automation. This takes a static variable for name and can write to a log what the status of that service
+#is without needing any user intervention. This means that it could be run from Task Scheduler or triggered otherwise
+
+$name = "BITS"
+$service = Get-Service $name 
+        
+    If ($service.status -eq "Running") {
+        
+        Write-Output "The service $name is running" | Out-File $log -Append }
+        
+    Else {
+        
+        Write-Host "The service $name is not running" | Out-File $log }
+
+Invoke-item $log
+#endregion
+
