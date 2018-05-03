@@ -179,3 +179,50 @@ Get-Process | Select-Object ProcessName, VM | Sort-Object VM -Descending | Expor
 
 #endregion
 
+#region Filter
+
+#filter left, filter early
+Get-CimInstance -class Win32_NetworkAdapterConfiguration -Filter "IpEnabled = 'True' " 
+
+#filter, then filter out of the pipeline
+Get-CimInstance -class Win32_NetworkAdapterConfiguration -Filter "IpEnabled = 'True' " | Where-Object {$_.Description -like "*ThinkPad*" }
+
+#comparisons
+5 -eq 5
+
+"Name" -eq "Name"
+
+"Name" -eq "Number"
+
+"Name" -ne "Number"
+
+"This is a bunch of text" -like "*tex*"
+
+#comparing multiple statements
+5 -lt 7
+
+(5 -lt 7) -and (7 -lt 10)
+
+(5 -lt 7) -and (7 -lt 5)
+
+#endregion
+
+#region More filtering
+
+#Going to connect to resources out of this presentation for a more practical example
+Import-Module ActiveDirectory
+
+Get-Help Get-ADUser -Full
+
+Get-ADUser -Filter 'Name -like "*_sccm*"'
+
+Get-ADUser -Filter 'Name -like "*_sccm*"' | Format-Table Name,Samaccountname
+
+New-ADGroup -Name "SCCM Service Accounts" -SamAccountName SCCMServiceAccounts -GroupCategory Security -GroupScope Global -DisplayName "SCCM Service Accounts" -Path "OU=TTL,DC=hq,DC=iu13,DC=local"
+
+Get-ADUser -Filter 'Name -like "*_sccm*"' | Add-ADPrincipalGroupMembership -MemberOf "SCCM Service Accounts"
+
+Get-ADUser -Identity joe_student
+
+
+#endregion
