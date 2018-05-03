@@ -152,10 +152,6 @@ Invoke-Item C:\TTL\SecurityLog.csv
 Import-Csv C:\TTL\SecurityLog.csv
 #endregion
 
-#region Import modules?
-
-#endregion
-
 #region Objects
 
 #Visually show the object returned from Get-Process. This is a great way to understand the object rows and property columns
@@ -209,20 +205,112 @@ Get-CimInstance -class Win32_NetworkAdapterConfiguration -Filter "IpEnabled = 'T
 
 #region More filtering
 
-#Going to connect to resources out of this presentation for a more practical example
+#Going to connect to resources out of this presentation for a more practical example. You can't run these, but can reference later
+#Import AD module to run AD commands locally
 Import-Module ActiveDirectory
 
+#Can get help for imported commands from module
 Get-Help Get-ADUser -Full
 
+#Filter left, filter early again. We can use filter in a useful AD scenario, like finding all my SCCM service accounts
 Get-ADUser -Filter 'Name -like "*_sccm*"'
 
+#Filter out my SCCM service accounts, then present in a easy to read format with just the properties I'm looking for
 Get-ADUser -Filter 'Name -like "*_sccm*"' | Format-Table Name,Samaccountname
 
+#Make a group for example
 New-ADGroup -Name "SCCM Service Accounts" -SamAccountName SCCMServiceAccounts -GroupCategory Security -GroupScope Global -DisplayName "SCCM Service Accounts" -Path "OU=TTL,DC=hq,DC=iu13,DC=local"
 
+#Find all SCCM service accounts, then add each one to the new group
 Get-ADUser -Filter 'Name -like "*_sccm*"' | Add-ADPrincipalGroupMembership -MemberOf "SCCM Service Accounts"
 
-Get-ADUser -Identity joe_student
+#Filter early for job title. We could use this on any property that user accounts have, then perform a bulk action on those accounts
+Get-ADUser -Filter {Title -like "Test Student"}
 
+#Alternate way we could filter. This grabs all users and properties and then checks the title. This doesn't work though, why?
+Get-ADUser -Filter * | Where-Object {$_.Title -like "Test Student"}
+
+#This correctly runs
+Get-ADUser -Filter * -Properties Title | Where-Object {$_.Title -like "Test Student"}
+
+#Why do we filter early? Speed. Measure the time it takes to run this command
+Measure-Command {Get-ADUser -Filter {Title -like "Test Student"}}
+
+#Measure time for filtering after all objects are returned
+Measure-Command {Get-ADUser -Filter * -Properties Title | Where-Object {$_.Title -like "Test Student"}}
+
+#Narrow down what you are looking for then find
+Get-ADUser -SearchBase "OU=TTL,DC=hq,DC=iu13,DC=local" -Filter *
+#endregion
+
+#region Variables
+
+#Everything is an object. Note the different methods available to a string
+"string of text" | Get-Member
+
+#Variables are easily assignable. That variable then has methods and properties available
+$text = "string of text"
+
+#Now we can apply methods to the object directly. We could save the variable in its new state by doing $text = $text.ToUpper()
+$text.ToUpper()
+
+#Another method test
+$text.Substring(3)
+
+#This uses the Windows environmental variable for your computer name. 
+#Not much to do with powershell, but I don't have to worry about hardcoding a value for you to run
+$env:COMPUTERNAME
+
+#We can assign the variable so that we can use $computer whenever computer name is needed
+$Computer = $env:COMPUTERNAME
+
+#Now we can run commands using the variable instead of typing name every time. This gets more important with multiple values or loops
+Get-CimInstance win32_computersystem -ComputerName $computer
+
+#Assigning a numerical value to a variable
+$number = 7
+
+#What type is the variable?
+$number | Get-Member
+
+#Clear out the variable
+$number = $null
+
+#Declaring it as an integer and assigning a value
+[int]$number = 7
+
+#Now it is showing as System.Int32 and we can perform math if we wanted
+$number | Get-Member
+
+#Math
+$number * 8
+
+#We can assign multiple values to a variable. Just need to separate the values with commas. 
+$computers = 'server1', 'server2', 'server3'
+
+#Multiple values!
+$computers
+
+#Loop through and change all computer names to upper case
+$computers | ForEach-Object {$_.ToUpper()}
+
+#Again, methods can be performed directly on the variable since it is an object
+$computers.ToUpper()
+
+#We can store entire result sets in a variable. Think like a table that we can access
+$services = Get-Service
+
+#This allows us to check all "rows" int eh table for a service with Name of BITS. Then we can pipe those results into disabling that service
+$services | Where-Object {$_.Name -eq "BITS"} | Set-Service -StartupType "Disabled"
+
+#Ok let's not screw up your computer, revert that change.
+$services | Where-Object {$_.Name -eq "BITS"} | Set-Service -StartupType "Automatic"
+    
+#Clear out variable
+$services = $null
+
+#Remember how we import data from a spreadsheet earlier? Previously we could really just look at it. Now we can work with that data
+#Here is the service name and Virtual Memory all stored in an object we can work with
+$services = Import-Csv C:\TTL\ProcessName.csv
 
 #endregion
