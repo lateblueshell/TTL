@@ -5,26 +5,24 @@ Return "This is a demo script, please don't just run me"
 #Help info for the Get-Help command. A bit meta
 Get-Help
 
-#Update help on a fresh build for most recent changes
+#Update help on a fresh build for most recent changes. Note, run this later when you have time to let it finish
 Update-Help
 
 #Find a list of commands to get help for
 Get-Help *log*
 
-Get-EventLog
+#You can see the Verb-Noun setup of commands. This tells us what the command will do, and what it will be doing that action to. Examples:
+#Get-EventLog
+#Clear-EventLog
 
-Clear-EventLog
-
-##Verbage shows what the command should do
-
-#Get help for a specific command
+#Get help for a specific command. We can see a description of what the command does, Syntax including required parameters and related commands
 Get-Help Get-Eventlog
 
-#View additional help including examples
+#View additional help including examples of command. This is very similar to the online help
 Get-Help Get-Eventlog -Full
 
 #Online help
-https://docs.microsoft.com/en-us/powershell/module/
+Start-Process -Path https://docs.microsoft.com/en-us/powershell/module/
 
 #endregion
 
@@ -39,6 +37,8 @@ Get-Command *log*
 #Narrow down the search
 Get-Command *eventlog*
 
+#If interested, here is the list of approved verbs that should be used by commands https://msdn.microsoft.com/en-us/library/ms714428(v=vs.85).aspx
+
 #Get information about the Get-EventLog command
 Get-Command Get-EventLog
 
@@ -52,7 +52,13 @@ Get-EventLog
 Get-EventLog -LogName "Application"
 
 #Use additional parameters to narrow down what you get back
-Get-EventLog -LogName "Application" -Newest 10
+Get-EventLog -LogName "Application" -Newest 10 
+
+#Use parameters to narrow down the event you are looking for
+Get-EventLog -LogName "System" -Newest 10 -InstanceId "1500"
+
+#By default, not all properties are shown. We can see all by piping this to Format-List, or fl. More on this later
+Get-EventLog -LogName "Application" -Newest 1 | Format-List
 
 #Powershell isn't just used for your local computer. Reaching out to another server to get the event log
 Get-EventLog -LogName "System" -ComputerName server1
@@ -105,9 +111,6 @@ Get-ChildItem -Path "C:\TTL"
 #Check second directory
 Get-ChildItem -Path "C:\TTL2"
 
-#Cleanup our first directory including all files within
-Remove-Item -Path "C:\TTL\*" -Recurse
-
 #Cleanup our second directory including all files and do not prompt about removal
 Remove-Item -Path "C:\TTL2" -Recurse -Confirm:$false
 #endregion
@@ -133,7 +136,14 @@ Get-Service  | Where-Object {$_.Status -eq "Running"}
 Get-Service | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
 #Real world example - specific service that I know should be running is stopped on boot. Automatically start that service
+
+Get-Service -Name MBAMAgent | Stop-Service
+
+Get-Service -Name MBAMAgent
+
 Get-Service -Name MBAMAgent | Where-Object {$_.Status -eq "Stopped"} | Start-Service
+
+Get-Service -Name MBAMAgent | Stop-Service
 
 #endregion
 
