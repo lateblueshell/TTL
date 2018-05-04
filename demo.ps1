@@ -377,3 +377,7 @@ $service = Get-Service $name
 Invoke-item $log
 #endregion
 
+#Region Building a script
+
+
+#endregion
