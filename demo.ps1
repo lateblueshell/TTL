@@ -309,8 +309,9 @@ $services | Where-Object {$_.Name -eq "BITS"} | Set-Service -StartupType "Automa
 #Clear out variable
 $services = $null
 
-#Remember how we import data from a spreadsheet earlier? Previously we could really just look at it. Now we can work with that data
-#Here is the service name and Virtual Memory all stored in an object we can work with. 
+<#Remember how we import data from a spreadsheet earlier? Previously we could really just look at it. Now we can work with that data
+Here is the service name and Virtual Memory all stored in an object we can work with. 
+#>
 
 $services = Import-Csv "C:\TTL\ProcessName.csv"
 
@@ -325,9 +326,10 @@ $log = "C:\TTL\log.txt"
 $name = Read-Host "Enter a computer name"
 Write-Host $name
 
-#Ok, that works but Write-Host is not a great way to display text. As Don Jones famously said, it kills puppies. 
-#Further reading on that one https://blogs.technet.microsoft.com/heyscriptingguy/2015/07/04/weekend-scripter-welcome-to-the-powershell-information-stream/
-#Instead, we can use Write-Output
+<#Ok, that works but Write-Host is not a great way to display text. As Don Jones famously said, it kills puppies. 
+Further reading on that one https://blogs.technet.microsoft.com/heyscriptingguy/2015/07/04/weekend-scripter-welcome-to-the-powershell-information-stream/
+Instead, we can use Write-Output
+#>
 
 $name = Read-Host "Enter a computer name"
 Write-Output $name
@@ -347,9 +349,16 @@ Write-Host $name_host | Out-File $log -Append
 #Open the log to check
 Invoke-Item $log
 
-#So how would you use something like this? Here is a script that you could save as a ps1. Then a user could run it, answer the service name
-# and then get the status of that service
-$name = Read-Host "Enter a service name"
+
+#endregion
+
+#Region Building a script
+
+<#So how would you use something like this? Here is a script that you could save as a ps1. Then a user could run it, answer the service name
+ and then get the status of that service
+#>
+
+ $name = Read-Host "Enter a service name"
 $service = Get-Service $name 
 
      If ($service.status -eq "Running") {
@@ -358,10 +367,11 @@ $service = Get-Service $name
 
     Else {
 
-        Write-Host "The service is not running"}
+        Write-Output "The service is not running"}
 
-#Lets design a bit more for automation. This takes a static variable for name and can write to a log what the status of that service
-#is without needing any user intervention. This means that it could be run from Task Scheduler or triggered otherwise
+<#Lets design a bit more for automation. This takes a static variable for name and can write to a log what the status of that service
+is without needing any user intervention. This means that it could be run from Task Scheduler or triggered otherwise
+#>
 
 $name = "BITS"
 $service = Get-Service $name 
@@ -372,12 +382,115 @@ $service = Get-Service $name
         
     Else {
         
-        Write-Host "The service $name is not running" | Out-File $log }
+        Write-Output "The service $name is not running" | Out-File $log }
 
 Invoke-item $log
+
+<#Parameterize the script. So we have a script that can perform an action on a hard coded variable. How could we expand this to do more?
+We can add parameters to accept input without needing Read-Host. We'll take the variable and turn it into a parameter
+#>
+
+
+Param(
+        [string] $servicename
+)
+
+$log = "C:\TTL\log.txt"
+$service = Get-Service $servicename 
+        
+    If ($service.status -eq "Running") {
+        
+        Write-Output "The service $servicename is running" | Out-File $log -Append }
+        
+    Else {
+        
+        Write-Output "The service $servicename is not running" | Out-File $log }
+
+Invoke-item $log
+
+#Great. Now we have a powershell script that we can save somewhere and run to get the status of any service we would like. What's next?
+#Well, what if we have a list of services? What if we want to run this more than once in a script? Lets make it resuable
+#We can do that using a function. A function is saved in memory while the script executes and can be reused as many times as we'd like
+#Functions are assigned a name using the same Verb-Noun nomenclature that we've seen from standard powershell commands. 
+#Warning, scope
+
+Function Get-ServiceStatus {
+Param(
+        [string] $servicename
+)
+
+$log = "C:\TTL\log.txt"
+$service = Get-Service $servicename 
+        
+    If ($service.status -eq "Running") {
+        
+        Write-Output "The service $servicename is running" | Out-File $log -Append }
+        
+    Else {
+        
+        Write-Output "The service $servicename is not running" | Out-File $log }
+
+
+
+    }
+
+    Get-ServiceStatus -servicename BITS
+    Invoke-item $log
+
+#Ok, lets refine that function a bit. Currently its running against the local computer with the service we supply
+#However, if we run it without a service then it the function will fail. We can require a parameter
+#to be entered so that it doesn't fail. Also, we add a parameter for computer name so that this
+#could be run against another computer.
+Function Get-ServiceStatus {
+    Param(
+            [Parameter(Mandatory=$true)]
+            [string] $servicename,
+
+            [string] $computername = $env:COMPUTERNAME
+        )
+        
+
+    $service = Get-Service $servicename -ComputerName $computername
+                
+    If ($service.status -eq "Running") {
+                
+        Write-Output "The service $servicename on computer $computername is running"}
+                
+    Else {
+                
+        Write-Output "The service $servicename on computer $computername is not running"}
+        
+    }
+        
+        
+            
+        
+    Get-ServiceStatus -servicename BITS -computername $env:COMPUTERNAME
+
+
 #endregion
 
-#Region Building a script
+#region
+<#So, now we have a function that can be used repeatedly within a script. Let's take that one step further
+We want to be able to reuse this function across multiple scripts. This way, we could check the status
+of a service before we change something. We don't want to have to copy and paste the function into
+every script. Plus, if we make an update the function, then it needs to be updated in every script.
+Instead, we can save the function as a module by saving as a psm1 instead of ps1. We can then use
+Import-Module (modulepath\name) to import the module into our script when the script is run. The module
+can also be located in default locations where you don't need to define the path. Now, any updates to
+the function will be applied to that script every time it is run #>
 
+Import-Module C:\git\TTL\GetServiceStatus.psm1
+
+Get-ServiceStatus -servicename BITS 
+
+#endregion
+
+#region Cleanup
+
+#It's rude to make people create files and folders and not clean them up
+
+Remove-Item -Path "C:\TTL" -Recurse -Force
+Remove-Item -Path "C:\TTL2" -Recurse -Force
 
 #endregion
