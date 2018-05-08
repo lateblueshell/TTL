@@ -1,5 +1,7 @@
-#Lets design a bit more for automation. This takes a static variable for name and can write to a log what the status of that service
-#is without needing any user intervention. This means that it could be run from Task Scheduler or triggered otherwise
+<#Lets design a bit more for automation. This takes a static variable for name and can write to a log what the status of that service
+is without needing any user intervention. This means that it could be run from Task Scheduler or triggered otherwise
+#>
+
 
 $log = "C:\TTL\log.txt"
 $name = "BITS"
