@@ -2,13 +2,14 @@ Return "This is a demo script, please don't just run me"
 
 #region Help
 
-#Help info for the Get-Help command. A bit meta
+#Help info for the Get-Help command. A bit meta but a great place to start
 Get-Help
 
-#Update help on a fresh build for most recent changes. Note, run this later when you have time to let it finish
-Update-Help
+#Update help on a fresh build for most recent changes. Note, run this later when you have time to let it finish. Commented out so you don't have to wait
 
-#Find a list of commands to get help for
+#Update-Help
+
+#Find a list of commands to get help for. 
 Get-Help *log*
 
 #You can see the Verb-Noun setup of commands. This tells us what the command will do, and what it will be doing that action to. Examples:
@@ -22,7 +23,7 @@ Get-Help Get-Eventlog
 Get-Help Get-Eventlog -Full
 
 #Online help
-Start-Process -Path https://docs.microsoft.com/en-us/powershell/module/
+Start-Process -FilePath https://docs.microsoft.com/en-us/powershell/module/
 
 #endregion
 
@@ -61,13 +62,13 @@ Get-EventLog -LogName "System" -Newest 10 -InstanceId "1500"
 Get-EventLog -LogName "Application" -Newest 1 | Format-List
 
 #Powershell isn't just used for your local computer. Reaching out to another server to get the event log
-Get-EventLog -LogName "System" -ComputerName server1
+#Get-EventLog -LogName "System" -ComputerName server1
 
 #Get-eventlog allows for multiple values for the ComputerName parameter
-Get-EventLog -LogName "System" -ComputerName server1,server2 
+#Get-EventLog -LogName "System" -ComputerName server1,server2 
 
 #Switches do not require a value, by specifying the switch it is used
-Get-EventLog -LogName "System" -ComputerName server1,server2 -Verbose
+#Get-EventLog -LogName "System" -ComputerName server1,server2 -Verbose
 
 
 #endregion
@@ -129,6 +130,9 @@ Get-Service -Name BITS | Format-List
 #Use pipeline to sort all services by the Status property of that service
 Get-Service | Sort-Object -Property Status
 
+Get-Service | Sort-Object -Property Status -Descending
+
+
 #Find all services that are currently running
 Get-Service  | Where-Object {$_.Status -eq "Running"} 
 
@@ -136,14 +140,16 @@ Get-Service  | Where-Object {$_.Status -eq "Running"}
 Get-Service | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
 #Real world example - specific service that I know should be running is stopped on boot. Automatically start that service
+#First we stop the service to simulate it not running when it should be
+Get-Service -Name BITS | Stop-Service
 
-Get-Service -Name MBAMAgent | Stop-Service
+#Confirm it's stopped
+Get-Service -Name BITS
 
-Get-Service -Name MBAMAgent
+#Simulate the check on computer boot. Only if the service is stopped will Powershell try to start it. Otherwise, all is well
+Get-Service -Name BITS | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
-Get-Service -Name MBAMAgent | Where-Object {$_.Status -eq "Stopped"} | Start-Service
 
-Get-Service -Name MBAMAgent | Stop-Service
 
 #endregion
 
@@ -164,14 +170,22 @@ Import-Csv C:\TTL\SecurityLog.csv
 
 #region Objects
 
+#Check this out before running
+Get-Help Get-Process
+
 #Visually show the object returned from Get-Process. This is a great way to understand the object rows and property columns
 get-process | Out-GridView
 
-#Look at the objects and methods available for Get-Process
+#Look at the properties and methods available for Get-Process
 Get-Process | Get-Member
 
 #Narrow down the properties returned from the original object
 Get-Process | Select-Object ProcessName, VM
+
+#Check it out in Out-GridView
+Get-Process | Select-Object ProcessName, VM | Out-GridView
+
+Get-Process | Select-Object ProcessName, VM | Get-Member
 
 #Since the output we get is processed from right to left, we can get processes, 
 #select two properties of them, then sort by one of those properties
@@ -183,15 +197,23 @@ Get-Process | Select-Object ProcessName, VM | Sort-Object VM -Descending | Get-M
 #Export or Out commands should always come last. The object we have in the pipeline is now exported to text and stored. No methods left
 Get-Process | Select-Object ProcessName, VM | Sort-Object VM -Descending | Export-Csv C:\TTL\ProcessName.csv
 
+#We can see type was preserved
+Invoke-Item C:\TTL\ProcessName.csv
+
 #endregion
 
 #region Filter
+
+#Look at the command before running it
+Get-Help Get-CimInstance
 
 #filter left, filter early
 Get-CimInstance -class Win32_NetworkAdapterConfiguration -Filter "IpEnabled = 'True' " 
 
 #filter, then filter out of the pipeline
 Get-CimInstance -class Win32_NetworkAdapterConfiguration -Filter "IpEnabled = 'True' " | Where-Object {$_.Description -like "*ThinkPad*" }
+
+#Page on comparison operators https://docs.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_comparison_operators?view=powershell-5.1
 
 #comparisons
 5 -eq 5
@@ -496,6 +518,25 @@ the function will be applied to that script every time it is run #>
 Import-Module C:\git\TTL\GetServiceStatus.psm1
 
 Get-ServiceStatus -servicename BITS 
+
+<#We can also install publically published modules which have greatly enhanced powershell. 
+The Powershell Gallery(https://www.powershellgallery.com/items) is available to all Powershell 5 or later
+#>
+
+#Install module from PSGallery
+Install-Module Winscp
+
+#Import module into your script 
+Import-Module Winscp
+
+#We can check all the commands that were just imported
+Get-Command -Module Winscp
+
+#Check on commands that would allow us to create a new session
+Get-Command -Module Winscp *session*
+
+#Get all the help for that command which has been installed as part of the module
+Get-Help New-WinSCPSession
 
 #endregion
 
