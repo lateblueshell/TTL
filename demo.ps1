@@ -1,5 +1,12 @@
 Return "This is a demo script, please don't just run me"
 
+#region Getting Started
+
+#For the purposes of our demo, set your execution policy to unrestricted. We will create files to run that are unsigned
+Set-ExecutionPolicy -ExecutionPolicy Unrestricted
+
+#endregion
+
 #region Help
 
 #Help info for the Get-Help command. A bit meta but a great place to start
