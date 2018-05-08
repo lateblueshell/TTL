@@ -347,6 +347,20 @@ Here is the service name and Virtual Memory all stored in an object we can work 
 
 $services = Import-Csv "C:\TTL\ProcessName.csv"
 
+#We can see that the object is now available to use. Note, all types and column names are available for use 
+$services
+
+#We can use the object properties just as we did before
+$services.ProcessName
+
+#We can loop through and modify each object in the variable. 
+$services | ForEach-Object {
+    $NewName = $_.ProcessName + "_localhost"
+    $NewName
+}
+
+
+
 #endregion
 
 #region Output/Logging
@@ -545,6 +559,6 @@ Get-Help New-WinSCPSession
 #It's rude to make people create files and folders and not clean them up
 
 Remove-Item -Path "C:\TTL" -Recurse -Force
-Remove-Item -Path "C:\TTL2" -Recurse -Force
+
 
 #endregion
